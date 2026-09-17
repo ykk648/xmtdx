@@ -243,6 +243,7 @@ class TdxClient:
         auto_reconnect: bool = True,
         fallback_hosts: Sequence[str] = (),
         max_attempts: int = 2,
+        setup_commands: Sequence[bytes] | None = None,
     ) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts 必须至少为 1")
@@ -253,7 +254,8 @@ class TdxClient:
         self._timeout = timeout
         self._auto_reconnect = auto_reconnect
         self._max_attempts = max_attempts
-        self._conn = TdxConnection(self._host, port, timeout)
+        self._setup_commands = setup_commands
+        self._conn = TdxConnection(self._host, port, timeout, setup_commands)
 
     # ------------------------------------------------------------------ #
     # 工厂方法：自动优选最低延迟服务器
@@ -330,7 +332,9 @@ class TdxClient:
                 self._conn.close()
                 self._host_index = (self._host_index + 1) % len(self._hosts)
                 self._host = self._hosts[self._host_index]
-                self._conn = TdxConnection(self._host, self._port, self._timeout)
+                self._conn = TdxConnection(
+                    self._host, self._port, self._timeout, self._setup_commands
+                )
             try:
                 if not self._conn.is_connected:
                     self._conn.connect()
@@ -774,6 +778,7 @@ class AsyncTdxClient:
         heartbeat_interval: float = 60.0,
         fallback_hosts: Sequence[str] = (),
         max_attempts: int = 2,
+        setup_commands: Sequence[bytes] | None = None,
     ) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts 必须至少为 1")
@@ -785,7 +790,8 @@ class AsyncTdxClient:
         self._auto_reconnect = auto_reconnect
         self._heartbeat_interval = heartbeat_interval
         self._max_attempts = max_attempts
-        self._conn = AsyncTdxConnection(self._host, port, timeout)
+        self._setup_commands = setup_commands
+        self._conn = AsyncTdxConnection(self._host, port, timeout, setup_commands)
         self._execute_lock = asyncio.Lock()
         self._heartbeat_task: asyncio.Task[None] | None = None
 
@@ -886,7 +892,9 @@ class AsyncTdxClient:
                     await self._conn.close()
                     self._host_index = (self._host_index + 1) % len(self._hosts)
                     self._host = self._hosts[self._host_index]
-                    self._conn = AsyncTdxConnection(self._host, self._port, self._timeout)
+                    self._conn = AsyncTdxConnection(
+                        self._host, self._port, self._timeout, self._setup_commands
+                    )
                 try:
                     if not self._conn.is_connected:
                         await self._conn.connect()

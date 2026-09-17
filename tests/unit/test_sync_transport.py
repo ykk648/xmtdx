@@ -99,4 +99,4 @@ def test_sync_capture_retains_wire_bytes() -> None:
     assert captured.raw_body == body
     assert captured.body == body
     assert captured.result == 42
-    assert sock.requests[:3] == list(SETUP_COMMANDS)
+    assert sock.requests[: len(SETUP_COMMANDS)] == list(SETUP_COMMANDS)

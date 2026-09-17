@@ -1,6 +1,7 @@
 """异步 TCP 连接（基于 asyncio）。"""
 
 import asyncio
+from collections.abc import Sequence
 from types import TracebackType
 from typing import TYPE_CHECKING, TypeVar
 
@@ -70,10 +71,15 @@ class AsyncTdxConnection:
         host: str = _DEFAULT_HOST,
         port: int = _DEFAULT_PORT,
         timeout: float = _DEFAULT_TIMEOUT,
+        setup_commands: Sequence[bytes] | None = None,
     ) -> None:
         self.host = host
         self.port = port
         self.timeout = timeout
+        # 默认只发前两条命令，见 commands/setup.py 里关于 0x0FDB 的说明
+        self._setup_commands: tuple[bytes, ...] = (
+            tuple(setup_commands) if setup_commands is not None else SETUP_COMMANDS
+        )
         self._reader: asyncio.StreamReader | None = None
         self._writer: asyncio.StreamWriter | None = None
         # 单连接不支持请求复用；所有 IO 在连接内串行执行。
@@ -183,10 +189,10 @@ class AsyncTdxConnection:
     # ------------------------------------------------------------------ #
 
     async def _send_setup(self) -> None:
-        """按序发送三条握手命令并丢弃响应。"""
+        """按序发送握手命令并丢弃响应（默认两条，见 commands/setup.py）。"""
         assert self._writer is not None
         assert self._reader is not None
-        for cmd_bytes in SETUP_COMMANDS:
+        for cmd_bytes in self._setup_commands:
             self._writer.write(cmd_bytes)
             await asyncio.wait_for(self._writer.drain(), timeout=self.timeout)
             hdr_buf = await self._recv_exact(HEADER_SIZE)
