@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, TypeVar
 from ..codec.frame import HEADER_SIZE, decompress_body, parse_header
 from ..commands.setup import SETUP_COMMANDS
 from ..exceptions import TdxConnectionError, TdxError
+from ..hosts import DEFAULT_PORT, KNOWN_HOSTS
 from .capture import CapturedResponse
 
 if TYPE_CHECKING:
@@ -17,67 +18,8 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 _DEFAULT_HOST = "180.153.18.170"
-_DEFAULT_PORT = 7709
+_DEFAULT_PORT = DEFAULT_PORT
 _DEFAULT_TIMEOUT = 15.0
-
-# 已知可用的通达信行情服务器（按实测握手延迟升序，2026-09-17 实测 54/59 可用）
-# 由 tdx_hosts 探活脚本维护，失效前不必频繁改动
-KNOWN_HOSTS: list[str] = [
-    "122.51.120.217",  # 0.16s [injoyai]
-    "119.97.185.59",  # 0.16s [injoyai]
-    "101.35.121.35",  # 0.17s [injoyai]
-    "121.36.225.169",  # 0.17s [injoyai]
-    "124.70.199.56",  # 0.17s [injoyai]
-    "111.231.113.208",  # 0.17s [injoyai]
-    "150.158.160.2",  # 0.17s [injoyai]
-    "124.71.187.72",  # 0.17s [injoyai]
-    "123.60.84.66",  # 0.18s [injoyai]
-    "124.70.133.119",  # 0.18s [injoyai]
-    "124.223.163.242",  # 0.18s [injoyai]
-    "118.25.98.114",  # 0.18s [injoyai]
-    "111.229.247.189",  # 0.18s [injoyai]
-    "124.71.187.122",  # 0.18s [injoyai]
-    "122.51.232.182",  # 0.18s [injoyai]
-    "123.60.70.228",  # 0.18s [injoyai]
-    "123.60.73.44",  # 0.20s [injoyai]
-    "180.153.18.170",  # 0.21s [local]
-    "49.232.15.141",  # 0.21s [injoyai]
-    "82.156.174.84",  # 0.21s [injoyai]
-    "81.70.151.186",  # 0.21s [injoyai]
-    "101.42.164.241",  # 0.22s [injoyai]
-    "120.53.8.251",  # 0.23s [injoyai]
-    "101.42.240.54",  # 0.23s [injoyai]
-    "101.43.159.194",  # 0.23s [injoyai]
-    "62.234.50.143",  # 0.23s [injoyai]
-    "116.205.183.150",  # 0.24s [injoyai]
-    "111.230.186.52",  # 0.24s [injoyai]
-    "152.136.191.169",  # 0.24s [injoyai]
-    "218.75.126.9",  # 0.24s [local]
-    "116.205.163.254",  # 0.24s [injoyai]
-    "115.238.56.198",  # 0.24s [local]
-    "115.238.90.165",  # 0.24s [local]
-    "117.34.114.15",  # 0.24s [local]
-    "110.41.2.72",  # 0.25s [injoyai]
-    "117.34.114.27",  # 0.25s [local]
-    "124.71.9.153",  # 0.26s [injoyai]
-    "110.41.147.114",  # 0.26s [injoyai]
-    "116.205.171.132",  # 0.26s [injoyai]
-    "117.34.114.17",  # 0.27s [local]
-    "117.34.114.20",  # 0.28s [local]
-    "117.34.114.18",  # 0.28s [local]
-    "117.34.114.16",  # 0.28s [local]
-    "117.34.114.14",  # 0.28s [local]
-    "59.36.5.11",  # 0.28s [local]
-    "81.71.32.47",  # 0.28s [injoyai]
-    "58.63.254.236",  # 0.28s [local]
-    "159.75.29.111",  # 0.29s [injoyai]
-    "175.178.128.227",  # 0.29s [injoyai]
-    "43.139.95.83",  # 0.29s [injoyai]
-    "101.33.225.16",  # 0.31s [injoyai]
-    "43.139.18.171",  # 0.32s [injoyai]
-    "129.204.230.128",  # 0.32s [injoyai]
-    "175.178.112.197",  # 0.33s [injoyai]
-]
 
 
 def ping_host(

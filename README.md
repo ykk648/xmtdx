@@ -84,13 +84,45 @@ with TdxClient.from_best_host(ping_timeout=5.0) as c:
 client = await AsyncTdxClient.from_best_host(ping_timeout=5.0)
 ```
 
+#### 真实可用性探活（`xmtdx.hosts`）
+
+`ping_all()` 只验证握手和 `get_security_count`，会放过一批「只答 count、K 线
+永远为空」的半死服务器。`xmtdx.hosts` 改用**真实 K 线请求**（沪、深各一只 ETF
+日线都非空）判定可用，并带磁盘缓存：
+
+```python
+from xmtdx import resolve_hosts, probe_hosts, mark_unhealthy
+
+# 优先读缓存（默认 ~/.cache/xmtdx/hosts.json，TTL 6 小时），过期则全量探活
+for host, port in resolve_hosts():
+    try:
+        with TdxClient(host, port) as c:
+            ...
+        break
+    except Exception:
+        mark_unhealthy(host)          # 剔除后可立刻重试下一台
+
+# 不走缓存，直接并发探活
+probe_hosts(timeout=3.0)              # -> [("115.238.90.165", 0.14), ...]
+```
+
+命令行（`xmtdx-hosts --refresh`，等价于 `python -m xmtdx.hosts --refresh`）
+会重新实测全部候选并把结果打印成可直接粘贴的列表：
+
+| 环境变量 | 说明 |
+| --- | --- |
+| `XMTDX_HOSTS` | 逗号分隔的服务器地址，设置后跳过缓存与探活 |
+| `XMTDX_HOSTS_TTL` | 磁盘缓存有效期（秒），默认 `21600` |
+| `XMTDX_HOSTS_TIMEOUT` | 单台探活超时（秒），默认 `3.0` |
+| `XMTDX_HOSTS_CACHE` | 缓存文件路径，默认 `~/.cache/xmtdx/hosts.json` |
+
 内置服务器列表（`KNOWN_HOSTS`，2026-09-17 实测 54 台可用，按握手延迟升序）：
 
 ```
 122.51.120.217  119.97.185.59   101.35.121.35   121.36.225.169
 124.70.199.56   111.231.113.208 150.158.160.2   124.71.187.72
 123.60.84.66    124.70.133.119  124.223.163.242 118.25.98.114
-... （完整 54 台见 src/xmtdx/transport/sync.py）
+... （完整 54 台见 src/xmtdx/hosts.py）
 ```
 
 `from_best_host()` 会把测速可达的主机配置为候选列表，但单次调用最多尝试

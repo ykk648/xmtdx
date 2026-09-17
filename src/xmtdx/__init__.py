@@ -29,6 +29,17 @@ from .exceptions import (
     TdxError,
     TdxResponseError,
 )
+from .hosts import (
+    KNOWN_HOSTS,
+    candidate_hosts,
+    clear_cache,
+    last_verified_at,
+    mark_unhealthy,
+    probe_host,
+    probe_hosts,
+    refresh,
+    resolve_hosts,
+)
 from .models import (
     XDXR_CATEGORY_NAMES,
     CompanyInfoCategory,
@@ -47,7 +58,7 @@ from .models.finance import TdxBlock
 from .models.stats import FundFlow, HistoricalFundFlow, MarketStat
 from .transport.async_ import ping_all_async
 from .transport.capture import CapturedResponse
-from .transport.sync import KNOWN_HOSTS, ping_all
+from .transport.sync import ping_all
 
 __all__ = [
     # 客户端
@@ -81,8 +92,15 @@ __all__ = [
     "ping_all",
     "ping_all_async",
     "KNOWN_HOSTS",
+    "candidate_hosts",
+    "clear_cache",
+    "last_verified_at",
+    "mark_unhealthy",
+    "probe_host",
+    "probe_hosts",
+    "resolve_hosts",
     "to_dataframe",
     "CapturedResponse",
 ]
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"

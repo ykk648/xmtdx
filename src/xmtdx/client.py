@@ -26,6 +26,7 @@ from .commands.security_quotes import GetSecurityQuotesCmd
 from .commands.transaction import GetHistoryTransactionDataCmd, GetTransactionDataCmd
 from .commands.xdxr_info import GetXdxrInfoCmd
 from .exceptions import TdxConnectionError, TdxDecodeError, TdxResponseError
+from .hosts import DEFAULT_PORT, KNOWN_HOSTS
 from .models.bar import IndexBar, SecurityBar
 from .models.enums import KlineCategory, Market
 from .models.finance import CompanyInfoCategory, FinanceInfo, TdxBlock, XdxrRecord
@@ -34,10 +35,10 @@ from .models.security import SecurityInfo
 from .models.stats import FundFlow, HistoricalFundFlow, MarketStat
 from .models.timeseries import MinuteBar, TransactionRecord
 from .transport.async_ import AsyncTdxConnection, ping_all_async
-from .transport.sync import KNOWN_HOSTS, TdxConnection, ping_all
+from .transport.sync import TdxConnection, ping_all
 from .validation import validate_date
 
-_DEFAULT_PORT = 7709
+_DEFAULT_PORT = DEFAULT_PORT
 _DEFAULT_TIMEOUT = 5.0
 _T = TypeVar("_T")
 _SHANGHAI_TZ = ZoneInfo("Asia/Shanghai")
