@@ -11,6 +11,7 @@ import asyncio
 
 import pytest
 
+from tests.unit.test_sync_transport import _frame, _ScriptedSocket
 from xmtdx import AsyncTdxClient, Market, TdxClient
 from xmtdx.commands.setup import (
     SETUP_CMD1,
@@ -21,8 +22,6 @@ from xmtdx.commands.setup import (
 )
 from xmtdx.exceptions import TdxConnectionError
 from xmtdx.transport.sync import TdxConnection
-
-from tests.unit.test_sync_transport import _ScriptedSocket, _frame
 
 
 def test_default_handshake_skips_the_0fdb_login() -> None:

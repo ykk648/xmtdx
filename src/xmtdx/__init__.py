@@ -98,6 +98,7 @@ __all__ = [
     "mark_unhealthy",
     "probe_host",
     "probe_hosts",
+    "refresh",
     "resolve_hosts",
     "to_dataframe",
     "CapturedResponse",

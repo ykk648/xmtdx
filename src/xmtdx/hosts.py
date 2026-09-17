@@ -39,10 +39,11 @@ from __future__ import annotations
 import json
 import os
 import time
+from collections.abc import Iterable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Lock
-from typing import Optional, Sequence
+from typing import Any
 
 from .models.enums import KlineCategory, Market
 
@@ -69,7 +70,7 @@ MAX_PROBE_WORKERS = 32
 CACHE_SCHEMA = 1
 
 # 探活要求沪、深两市 ETF 日线都非空；只看 security_count 会把半死服务器算成可用。
-PROBE_BARS: tuple[tuple[int, str], ...] = (
+PROBE_BARS: tuple[tuple[Market, str], ...] = (
     (Market.SH, "510300"),
     (Market.SZ, "159934"),
 )
@@ -81,7 +82,7 @@ CACHE_PATH = Path(
 
 _CACHE_LOCK = Lock()
 _PROBE_LOCK = Lock()
-_MEMORY_CACHE: Optional[list[tuple[str, int]]] = None
+_MEMORY_CACHE: list[tuple[str, int]] | None = None
 
 # 2026-09-17 实测可用的服务器（按握手延迟升序）。列表由本模块的探活能力维护，
 # 遇到大范围失效时用 ``python -m xmtdx.hosts --refresh`` 重新实测。
@@ -162,7 +163,7 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
-def _dedupe(pairs: Sequence[tuple[str, int]]) -> list[tuple[str, int]]:
+def _dedupe(pairs: Iterable[tuple[str, int]]) -> list[tuple[str, int]]:
     seen: set[tuple[str, int]] = set()
     ordered: list[tuple[str, int]] = []
     for item in pairs:
@@ -187,7 +188,7 @@ def probe_host(
     timeout: float = DEFAULT_PROBE_TIMEOUT,
     *,
     require_bars: bool = True,
-) -> Optional[float]:
+) -> float | None:
     """测量单台服务器完成握手 + 真实 K 线查询所需的时间（秒）。
 
     ``require_bars`` 为 True 时要求沪、深两市 ETF 日线都非空，以剔除
@@ -221,7 +222,7 @@ def probe_host(
 
 
 def probe_hosts(
-    hosts: Optional[Sequence[str]] = None,
+    hosts: Sequence[str] | None = None,
     port: int = DEFAULT_PORT,
     timeout: float = DEFAULT_PROBE_TIMEOUT,
     *,
@@ -236,7 +237,7 @@ def probe_hosts(
     if not targets:
         return []
 
-    def _one(host: str) -> Optional[float]:
+    def _one(host: str) -> float | None:
         return probe_host(host, port, timeout, require_bars=require_bars)
 
     results: list[tuple[str, float]] = []
@@ -248,7 +249,7 @@ def probe_hosts(
     return results
 
 
-def _read_cache() -> Optional[dict]:
+def _read_cache() -> dict[str, Any] | None:
     try:
         with CACHE_PATH.open("r", encoding="utf-8") as handle:
             payload = json.load(handle)
@@ -276,7 +277,7 @@ def _write_cache(hosts: Sequence[tuple[str, int]], ttl: int) -> None:
         pass
 
 
-def _cached_hosts(ttl: int) -> Optional[list[tuple[str, int]]]:
+def _cached_hosts(ttl: int) -> list[tuple[str, int]] | None:
     payload = _read_cache()
     if not payload:
         return None
@@ -296,7 +297,7 @@ def _cached_hosts(ttl: int) -> Optional[list[tuple[str, int]]]:
     return cached or None
 
 
-def last_verified_at() -> Optional[float]:
+def last_verified_at() -> float | None:
     """缓存中最近一次探活成功的时间戳（epoch 秒）。"""
     payload = _read_cache()
     value = (payload or {}).get("verified_at")
@@ -338,8 +339,8 @@ def clear_cache() -> None:
 
 def resolve_hosts(
     force: bool = False,
-    ttl: Optional[int] = None,
-    timeout: Optional[float] = None,
+    ttl: int | None = None,
+    timeout: float | None = None,
 ) -> list[tuple[str, int]]:
     """返回可用服务器列表（``(host, port)``，按延迟升序）。
 
@@ -400,7 +401,7 @@ def refresh() -> list[tuple[str, float]]:
     return ranked
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """命令行入口：``xmtdx-hosts --refresh`` 重新实测并打印可用服务器。"""
     import sys
 
